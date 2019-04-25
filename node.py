@@ -39,7 +39,7 @@ class node:
         
     def store(self, key, value):
         self._storedValue[key] = value 
-        print('coppia ' + key + ' '+ value + ' correttamente inserita')
+        print('pair ' + key + ' '+ value + ' inserted')
 
     def findValue(self, key):
         return self._storedValue[key]
