@@ -10,4 +10,16 @@ print(bin(int(hashcodec,16)))
 bi = bin(int(hashcodes,16) ^ int(hashcodec,16))
 print('{0:08b}'.format(int(hashcodes,16) ^ int(hashcodec,16)))
 """
-print(random.getrandbits(1))
+#print(random.getrandbits(1))
+numbit = 3
+rt = None
+rt = [None] * numbit
+for i in range(numbit):
+    rt[i] = [None] * numbit
+    print(rt[i][0])
+
+for i in range(numbit):
+    for c in range(numbit):
+        rt[i][c] = ('ciao', 2)
+
+print(rt)
