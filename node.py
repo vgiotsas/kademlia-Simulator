@@ -1,7 +1,8 @@
 import math
 import time
+import random
 
-class node:
+class Node:
     _active = True
     _ipAddress = None
     _udpPort = None
@@ -14,10 +15,10 @@ class node:
     _storedValue = {}#dizionario per avere accesso diretto
     #non so se deve essere impostato come la routing table, così mi sembra più efficente
 
-    def __init__(self, ipAddr, udpP, id, numBit):
+    def __init__(self, ipAddr, udpP, idNode, numBit):
         self._ipAddress = ipAddr
         self._udpPort = udpP
-        self._nodeId = id
+        self._nodeId = idNode
         self._numBit = numBit
 
         #inizializzo la rt
@@ -30,12 +31,13 @@ class node:
         return hash(ip + port)
     
     
-    def getId(self):
+    def getNodeId(self):
         return self._nodeId
 
 
     def insertNode(self, id):
         timestamp = time.time()
+        #FIXME l'hash genera anche interi negativi, farli restituire solo positivi ed eliminare i doppioni
         h = int(math.log2(id))
         i = 0
         minTimestamp = {'time': -1, 'pos': -1}
@@ -46,6 +48,7 @@ class node:
             i += 1
 
         if i < self._bucketLength:
+            self._routingTable[h][i] = {}
             self._routingTable[h][i]['id'] = id
             self._routingTable[h][i]['time'] = timestamp
         else:
@@ -90,12 +93,19 @@ class node:
             #finchè non riempo l'array o non vengono 
             if k <= h:
                 move = move * -1 +1
-                k += move
-                #TODO aggiungere che se va oltre la lista devo decrementare l'indice dalla parte opposta
+                #Se supero la lnghezza della lista allora incremento move per poi decrementarlo
+                if k+move <= self._numBit:
+                    k += move
+                else:
+                    move = move * -1 -1
+                    k += move
             else:
                 move = move * -1 -1
-                k += move
-                #TODO aggiungere che se va oltre la lista devo decrementare l'indice dalla parte opposta
+                if k + move >= 0:
+                    k += move
+                else:
+                    move = move * -1 +1
+                    k += move
 
             counterRt += 1
         return closestNode
@@ -120,3 +130,9 @@ class node:
 
     def changeState(self):
         self._active = not self._active
+    
+    def createRandomId(self):
+        randomId = []
+        for i in range(0, self._numBit):
+            randomId.append(random.getrandbits(pow(2, i)))
+        return randomId

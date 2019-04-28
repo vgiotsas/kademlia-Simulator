@@ -1,7 +1,7 @@
 import random
 import socket
 import struct
-from node import node
+from node import Node
 
 class Singleton(type):
     _instances = {}
@@ -14,16 +14,17 @@ class Coordinator(metaclass=Singleton):
     nodeNumber = None
     bitsNumber = None
     nodeList = []
+    notNetworkNode = []
+
 
 #TODO Da mettere in utility
 
     def createIp(self):
-        #TODO test
         return socket.inet_ntoa(struct.pack('>I', random.randint(1, 0xffffffff)))
     
     def createPort(self):
-        #TODO test
-        return random.randint(0, 49151)
+        port = random.randint(0, 49151)
+        return str(port)
     
     def createId(self, ip, port):
         return hash(ip + port)
@@ -37,8 +38,7 @@ class Coordinator(metaclass=Singleton):
         start = end - k + 1
         # extract k  bit sub-string 
         kBitSubStr = binary[start : end+1] 
-        # convert extracted sub-string into decimal again 
-        print (int(kBitSubStr,2)) 
+        # convert extracted sub-string into decimal again
         return int(kBitSubStr,2)
 
 #----------
@@ -47,16 +47,22 @@ class Coordinator(metaclass=Singleton):
         #devo generare un nuovo nodo
         ip = self.createIp()
         port = self.createPort()
-        self.nodeList.append(node(ip, port, id))
+        id = self.createId(ip, port)
         self.nodeNumber = n
         self.bitsNumber = m
+        no = Node(ip, port, id, m)
+        self.nodeList.append({'id': no.getNodeId(), 'node': no})
+        #self.nodeList.append(node(ip, port, id))
 
     def __createNode(self):
         nodeHashSet = set() #se nel set salvo ip+porta non c'è bisogno di istanziare classe, gli id coincidono
-        for i in range(1, self.nodeNumber-1):
+        for i in range(1, self.nodeNumber):
             ip = self.createIp()
             port = self.createPort()
             id = self.extractKBits(self.createId(ip,port), self.bitsNumber)
             if id not in nodeHashSet:
-                self.nodeList.append(node(ip, port, id))
+                node = Node(ip, port, id, self.bitsNumber)
+                #self.nodeList.append(node(ip, port, id))
+                #self.nodeList.append({'id': node.getNodeId(), 'node': node})
+                self.notNetworkNode.append({'id': node.getNodeId(), 'node': node})
                 nodeHashSet.add(id)
