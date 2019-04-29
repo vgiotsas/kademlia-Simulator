@@ -8,7 +8,8 @@ class Node:
     _udpPort = None
     _nodeId = None
     _numBit = None
-    _bucketLength = 20
+    #TODO riporta a 20
+    _bucketLength = 10
     _routingTable = [] #lista di liste con altezza che varia in base alla lunghezza dell'identificatore
     #ogni entry della routing table deve avere anche il timestamp del momento in cui il nodo è stato aggiunto
     #ogni nodo potrebbe essere rappresentato come dizionario, id, ip, port, timestamp 
@@ -26,89 +27,62 @@ class Node:
         for i in range(self._numBit):
             self._routingTable[i] = [None] * self._bucketLength
 
-
-    def __createId(self, ip, port):
-        return hash(ip + port)
-    
-    
     def getNodeId(self):
         return self._nodeId
 
+    def searchEl(self, list, el):
+        exist = False
+        for i in list:
+            if i is not None:
+                if i['id'] == el:
+                    exist = True
+        return exist
 
     def insertNode(self, id):
+        insert = False
         timestamp = time.time()
-        #FIXME l'hash genera anche interi negativi, farli restituire solo positivi ed eliminare i doppioni
         h = int(math.log2(id))
         i = 0
         minTimestamp = {'time': -1, 'pos': -1}
-        while self._routingTable[h][i] is not None:
-            if self._routingTable[h][i]['time'] > minTimestamp:
-                minTimestamp['time'] = self._routingTable[h][i]['time']
-                minTimestamp['pos'] = i
+        while self._routingTable[h-1][i] is not None:
+            if self._routingTable[h-1][i]['time'] > minTimestamp['time']:
+                minTimestamp = {'time': self._routingTable[h][i]['time'], 'pos': i}
+                #minTimestamp['time'] = self._routingTable[h][i]['time']
+                #minTimestamp['pos'] = i
             i += 1
 
-        if i < self._bucketLength:
-            self._routingTable[h][i] = {}
-            self._routingTable[h][i]['id'] = id
-            self._routingTable[h][i]['time'] = timestamp
-        else:
+        if i < self._bucketLength and not self.searchEl(self._routingTable[h], id):
+            self._routingTable[h].append({'id': id, 'time': timestamp})
+            insert = True
+            #self._routingTable[h][i] = {'id': id, 'time': timestamp}
+            #self._routingTable[h][i]['id'] = id
+            #self._routingTable[h][i]['time'] = timestamp
+        elif i == self._bucketLength:
             if minTimestamp['time'] < timestamp:
                 i = minTimestamp['pos']
                 self._routingTable[h][i]['id'] = id
                 self._routingTable[h][i]['time'] = timestamp
+                insert = True
+        return insert
 
-
-    def findNode(self, id, dim):
+    def findNode(self, id):
+        dimensionOfReturn = 7
         closestNode = []
-        temp = None
-        h = int(math.log2(id))
-        k = h
-        move = 0 #mi serve per spostarmi su e giu nella rt
-        counterRt = 0
-        #finchè closestnode non è pieno, se è pieno controlla che non vengano aggiornati gli elementi
-        # (più vicini vengono sostituiti a più lontani)
-        #oppure finchè il numerro di 
-        while len(closestNode) < dim and closestNode[k]['id'] != temp or counterRt < self._numBit:
-            #uso una variabile "temporanea" per tenere l'ultimo elemento in memoria, se qualcosa cambia deve per forza cambiare anche 
-            #l'ultimo, dato che ordinando la lista l'ultimo è il più distante
-            temp = closestNode[k]['id']
-            for i in range(self._bucketLength):#conosco il numero di elementi della bucket quindi scorro sugli elementi
-                rtId = self._routingTable[k][i]['id']#prendo l'id in posizione i
-                distance = self.distance(id, rtId)#prendo la distanza in posizione i
-                if len(closestNode)  < dim:#se la lunghezza di closestnode è minore della lunghezza che deve essere restituita
-                    closestNode.append({'id': rtId, 'dist': distance})#aggiungo il nodo (id distanza) alla lista
-                else:#se invece la lista è piena
-                    #ordino la lista per la distanza in modo da avere l'ultimo elemento come il più distante
-                    closestNode = sorted(closestNode, key=lambda k: k['dist']) 
-                    if closestNode[k]['dist'] > distance: #se l'ultimo elemento di closestnode è maggiore di quello attuale allora li scambio
-                        #in quanto sto inserendo un nodo più vicino
-                        closestNode[k]['id'] = rtId
-                        closestNode[k]['dist'] = distance
-            
-            #ordino la lista in modo che se ci sono stati cambiamenti viene aggiornato l'ultimo elemento
-            closestNode = sorted(closestNode, key=lambda k: k['dist']) 
-
-            #questo serve per non scorrere tutta la bucketlist
-            #parto dall'altezza h per poi controllare quello immediatamente sotto e sopra, per coi continuare sopra e sotto
-            #finchè non riempo l'array o non vengono 
-            if k <= h:
-                move = move * -1 +1
-                #Se supero la lnghezza della lista allora incremento move per poi decrementarlo
-                if k+move <= self._numBit:
-                    k += move
-                else:
-                    move = move * -1 -1
-                    k += move
-            else:
-                move = move * -1 -1
-                if k + move >= 0:
-                    k += move
-                else:
-                    move = move * -1 +1
-                    k += move
-
-            counterRt += 1
+        for i in self._routingTable:
+            for bucket in i:
+                if bucket is not None:
+                    rtId = bucket['id']
+                    dist = self.distance(id, rtId)
+                    if len(closestNode) < dimensionOfReturn and dist > 0:
+                        closestNode.append({'id': rtId, 'dist': dist})
+                    else:
+                        if dist > 0:
+                            closestNode = sorted(closestNode, key=lambda k: k['dist']) 
+                            if closestNode[dimensionOfReturn - 1]['dist'] > dist:
+                                closestNode[dimensionOfReturn - 1]['id'] = rtId  
+                                closestNode[dimensionOfReturn - 1]['dist'] = dist  
         return closestNode
+
 
 
     def distance(self, node1, node2):
@@ -134,5 +108,80 @@ class Node:
     def createRandomId(self):
         randomId = []
         for i in range(0, self._numBit):
-            randomId.append(random.getrandbits(pow(2, i)))
+            randomId.append(pow(2, i))
         return randomId
+
+"""
+    def findNode(self, id, dim):
+        #dim sarebbero i k elementi restituibili da findnode
+        #FIXME controllare la dimensione di k
+        closestNode = [{'id': 1, 'dist': 10000000000000000}]
+        temp = None
+        now = -1
+        print("l'id è "+str(id))
+        h = int(math.log2(id))
+        k = h
+        move = 0 #mi serve per spostarmi su e giu nella rt
+        counterRt = 0
+        #finchè closestnode non è pieno, se è pieno controlla che non vengano aggiornati gli elementi
+        # (più vicini vengono sostituiti a più lontani)
+        #oppure finchè il numero di 
+        #FIXME l'errore è out of range su questa riga
+        #NOTE Non so so il k-1 è giusto, controllare. perchè il problema probabilmentte è su id
+        #while len(closestNode) < dim and closestNode[k]['id'] != temp or counterRt < self._numBit:
+        while len(closestNode) < dim and now != temp or counterRt < self._numBit:
+            #uso una variabile "temporanea" per tenere l'ultimo elemento in memoria, se qualcosa cambia deve per forza cambiare anche 
+            #l'ultimo, dato che ordinando la lista l'ultimo è il più distante
+            print("k è "+str(k))
+            print(self._routingTable)
+            for i in self._routingTable[k]:#conosco il numero di elementi della bucket quindi scorro sugli elementi
+                print("ancora non so se è vuoto")
+                print(i)
+                if i is not None:
+                    print("qui non è vuoto")
+                    rtId = i['id']#prendo l'id in posizione i
+                    distance = self.distance(id, rtId)#prendo la distanza in posizione i
+                    print("la distanza è "+ str(distance))
+                    if len(closestNode)  < dim and distance > 0:#se la lunghezza di closestnode è minore della lunghezza che deve essere restituita
+                        print("inserisci sto coso")
+                        closestNode.append({'id': rtId, 'dist': distance})#aggiungo il nodo (id distanza) alla lista
+                    else:#se invece la lista è piena
+                        #ordino la lista per la distanza in modo da avere l'ultimo elemento come il più distante
+                        closestNode = sorted(closestNode, key=lambda k: k['dist']) 
+                        if closestNode[k]['dist'] > distance and distance > 0: #se l'ultimo elemento di closestnode è maggiore di quello attuale allora li scambio
+                            #in quanto sto inserendo un nodo più vicino
+                            closestNode[k] = {}
+                            closestNode[k]['id'] = rtId
+                            closestNode[k]['dist'] = distance
+            
+            #ordino la lista in modo che se ci sono stati cambiamenti viene aggiornato l'ultimo elemento
+            closestNode = sorted(closestNode, key=lambda k: k['dist']) 
+            #questo serve per non scorrere tutta la bucketlist
+            #parto dall'altezza h per poi controllare quello immediatamente sotto e sopra, per coi continuare sopra e sotto
+            #finchè non riempo l'array o non vengono 
+            temp = closestNode[len(closestNode) - 1]['id']
+            if k <= h:
+                #Se supero la lnghezza della lista allora incremento move per poi decrementarlo
+                if k + move * -1 +1<= self._numBit -1:
+                    #k += move
+                    move = move * -1 +1
+                    print("minore di closest")
+                    
+                else:
+                    move = move * -1 -1
+                    #k += move
+            else:
+                
+                if k + move * -1 -1 >= 0:
+                    #k += move
+                    move = move * -1 -1
+                    
+                else:
+                    print("dovrei trovarmi qui dentro in quanto minore di 0")
+                    move = move * -1 +1
+                    #k += move
+            now = closestNode[len(closestNode) - 1]['id']
+            k += move
+            counterRt += 1
+        return closestNode
+"""

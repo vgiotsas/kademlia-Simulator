@@ -1,32 +1,48 @@
 import random
+import math
 import hashlib
 from node import Node
 from coordinator import Coordinator
-"""
-s="192.168.10.190"
-c="ygiuguguiguiguiguigiugiugiugiguggiugiguiguiguguggiggiugiugiugiuguigiugiuguigiugiu"
-hashcodes=hashlib.md5((s).encode('utf-8')).hexdigest()
-hashcodec=hashlib.md5((c).encode('utf-8')).hexdigest()
-print(bin(int(hashcodes,16)))
-print(bin(int(hashcodec,16)))
-bi = bin(int(hashcodes,16) ^ int(hashcodec,16))
-print('{0:08b}'.format(int(hashcodes,16) ^ int(hashcodec,16)))
-"""
-#print(random.getrandbits(1))
+
 c = Coordinator(5,5)
 ip = c.createIp()
 port = c.createPort()
 c._Coordinator__createNode()
-print(c.nodeList)
 #scelgo il bootstrap a random da nodelist
-bootstrap = c.nodeList[random.randint(0, len(c.nodeList) - 1)]
-newNode = c.notNetworkNode[random.randint(0, len(c.notNetworkNode) - 1)]
+while len(c.notNetworkNode) > 0:
+    randBts = random.randint(0, len(c.nodeList) - 1)
+    bootstrap = c.nodeList[randBts]
+    randNn = random.randint(0, len(c.notNetworkNode) - 1)
+    newNode = c.notNetworkNode[randNn]
+    print(bootstrap)
+    print(newNode)
+    bootstrap['node'].insertNode(newNode['id'])
+    newNode['node'].insertNode(bootstrap['id'])
+    randomId = newNode['node'].createRandomId()
+    for i in randomId:
+        insert = None
+        #qui siamo in un bucket
+        #devo andare avanti finchè non riempo il bucket oppure finchè non mi arrivano più info nuove
+        fNode = bootstrap['node'].findNode(i)
+        if fNode is not None:
+            for n in fNode:
+                newNode['node'].insertNode(n['id'])
+        h = int(math.log2(bootstrap['id']))
 
-bootstrap['node'].insertNode(newNode['id'])
-newNode['node'].insertNode(bootstrap['id'])
-print(bootstrap['node']._routingTable)
-print(newNode['node']._routingTable)
+        for i in newNode['node']._routingTable[h]:
+            if i is not None:
+                for n in c.nodeList:
+                    if n['id'] == i['id']:
+                        nn = n['node'].findNode(i['id'])
+                        if nn is not None:
+                            print(nn)
+                            for n in nn:
+                                newNode['node'].insertNode(n['id'])
+                        
+    c.nodeList.append(c.notNetworkNode[randNn])
+    del c.notNetworkNode[randNn]
 
-randomId = newNode['node'].createRandomId()
-for i in randomId:
-    pass
+for i in c.nodeList:
+    print(i['id'])
+    print(i['node']._routingTable)
+    print("--------------")
