@@ -9,6 +9,7 @@ class Node:
     _nodeId = None
     _numBit = None
     #TODO riporta a 20
+    dimensionOfReturn = 7
     _bucketLength = 10
     _routingTable = [] #lista di liste con altezza che varia in base alla lunghezza dell'identificatore
     #ogni entry della routing table deve avere anche il timestamp del momento in cui il nodo è stato aggiunto
@@ -66,21 +67,21 @@ class Node:
         return insert
 
     def findNode(self, id):
-        dimensionOfReturn = 7
         closestNode = []
         for i in self._routingTable:
             for bucket in i:
                 if bucket is not None:
                     rtId = bucket['id']
+                    print("l'id nella routing table del nodo "+str(self._nodeId)+" è "+str(rtId))
                     dist = self.distance(id, rtId)
-                    if len(closestNode) < dimensionOfReturn and dist > 0 and rtId != id:
+                    if len(closestNode) < self.dimensionOfReturn and dist > 0 and rtId != id:
                         closestNode.append({'id': rtId, 'dist': dist})
                     else:
                         if dist > 0 and rtId != id:
                             closestNode = sorted(closestNode, key=lambda k: k['dist']) 
-                            if closestNode[dimensionOfReturn - 1]['dist'] > dist:
-                                closestNode[dimensionOfReturn - 1]['id'] = rtId  
-                                closestNode[dimensionOfReturn - 1]['dist'] = dist  
+                            if closestNode[self.dimensionOfReturn - 1]['dist'] > dist:
+                                closestNode[self.dimensionOfReturn - 1]['id'] = rtId  
+                                closestNode[self.dimensionOfReturn - 1]['dist'] = dist  
         return closestNode
 
 
