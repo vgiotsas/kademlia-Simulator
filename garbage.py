@@ -1,5 +1,11 @@
-
+x = [[] for i in range(3)]
+print(x)
 """
+l = []
+a = []
+for i in range(0,3):
+    a[i].append(l)
+
     def findNode(self, id, dim):
         #dim sarebbero i k elementi restituibili da findnode
         #FIXME controllare la dimensione di k

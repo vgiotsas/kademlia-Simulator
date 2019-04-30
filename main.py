@@ -4,8 +4,8 @@ import hashlib
 import csv
 from node import Node
 from coordinator import Coordinator
-dimensionOfReturn = 7
-c = Coordinator(5,5)
+dimensionOfReturn = 50
+c = Coordinator(8,5)
 ip = c.createIp()
 port = c.createPort()
 c._Coordinator__createNode()
@@ -29,8 +29,6 @@ while len(c.notNetworkNode) > 0:
     randomId = newNode['node'].createRandomId()
     for i in randomId:
         while len(kNode) < dimensionOfReturn:
-            print("_______________________")
-            print(prev)
             if not kNode:
                 prev = 0
             else:

@@ -9,9 +9,9 @@ class Node:
     _nodeId = None
     _numBit = None
     #TODO riporta a 20
-    dimensionOfReturn = 7
+    dimensionOfReturn = 50
     _bucketLength = 10
-    _routingTable = [] #lista di liste con altezza che varia in base alla lunghezza dell'identificatore
+    _routingTable = None #lista di liste con altezza che varia in base alla lunghezza dell'identificatore
     #ogni entry della routing table deve avere anche il timestamp del momento in cui il nodo è stato aggiunto
     #ogni nodo potrebbe essere rappresentato come dizionario, id, ip, port, timestamp 
     _storedValue = {}#dizionario per avere accesso diretto
@@ -24,9 +24,9 @@ class Node:
         self._numBit = numBit
 
         #inizializzo la rt
-        self._routingTable = [None] * numBit
-        for i in range(self._numBit):
-            self._routingTable[i] = [None] * self._bucketLength
+        #self._routingTable = [None] * numBit
+        self._routingTable = [[] for i in range(numBit)]
+            #self._routingTable[i] = [None] * self._bucketLength
 
     def getNodeId(self):
         return self._nodeId
@@ -43,6 +43,12 @@ class Node:
         insert = None
         timestamp = time.time()
         h = int(math.log2(id))
+        #faccio sempre append poi ordino rispetto al tempo, poi taglio per la lunghezza 
+        if not self.searchEl(self._routingTable[h], id) and id != self._nodeId:
+            self._routingTable[h].append({'id': id, 'time': timestamp})
+            self._routingTable[h] = sorted(self._routingTable[h], key=lambda k: k['time']) 
+            self._routingTable[h] = self._routingTable[h][:self._bucketLength]
+        """
         i = 0
         minTimestamp = {'time': -1, 'pos': -1}
         while self._routingTable[h-1][i] is not None:
@@ -65,6 +71,7 @@ class Node:
                 self._routingTable[h][i]['time'] = timestamp
                 insert = True
         return insert
+        """
 
     def findNode(self, id):
         closestNode = []
@@ -72,8 +79,9 @@ class Node:
             for bucket in i:
                 if bucket is not None:
                     rtId = bucket['id']
-                    print("l'id nella routing table del nodo "+str(self._nodeId)+" è "+str(rtId))
                     dist = self.distance(id, rtId)
+                    closestNode.append({'id': rtId, 'dist': dist})
+                    """
                     if len(closestNode) < self.dimensionOfReturn and dist > 0 and rtId != id:
                         closestNode.append({'id': rtId, 'dist': dist})
                     else:
@@ -82,7 +90,8 @@ class Node:
                             if closestNode[self.dimensionOfReturn - 1]['dist'] > dist:
                                 closestNode[self.dimensionOfReturn - 1]['id'] = rtId  
                                 closestNode[self.dimensionOfReturn - 1]['dist'] = dist  
-        return closestNode
+                    """
+        return closestNode[:self.dimensionOfReturn]
 
 
 
