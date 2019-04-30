@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt; plt.rcdefaults()
 import numpy as np
 import matplotlib.pyplot as plt
+import csv
+
 def barchart():
     objects = ('Python', 'C++', 'Java', 'Perl', 'Scala', 'Lisp')
     y_pos = np.arange(len(objects))
@@ -44,3 +46,30 @@ def barchartConfronto():
 
     plt.tight_layout()
     plt.show()
+
+with open('edge.csv', 'r') as f:
+    reader = csv.reader(f)
+    edge = list(reader)
+
+    ed = set()
+    for i in edge:
+        tup = ()
+        for l in range(0, len(i), 2):
+            tup = (int(i[l]), int(i[l+1]))
+            ed.add(tup)
+
+    with open('node.csv', 'r') as f:
+        reader = csv.reader(f)
+        node = list(reader)
+    
+    inOut = []
+    for i in node[0]:
+        inOut.append({'id': i, 'in': 0, 'out': 0})
+    for i in ed:
+        for j in inOut:
+            if int(j['id']) == int(i[0]):
+                j['out'] += 1
+            elif int(j['id']) == int(i[1]):
+                j['in'] += 1
+
+    print(inOut)

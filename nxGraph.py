@@ -36,7 +36,14 @@ class NxGra:
         print(nx.clustering(G))
 
         print("degree")
-        print(nx.degree(G))
+        deg = nx.degree(G)
+        print(deg)
+        sum = 0
+        for i in deg:
+            sum += i[0]
+        averageDegree = sum/len(deg)
+        print("average degree")
+        print(averageDegree)
 
 
         #plt.show()
