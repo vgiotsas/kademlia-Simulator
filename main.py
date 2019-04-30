@@ -4,8 +4,11 @@ import hashlib
 import csv
 from node import Node
 from coordinator import Coordinator
+
+
+#TODO tutto questo è da mettere nel main del coordinator
 dimensionOfReturn = 50
-c = Coordinator(8,5)
+c = Coordinator(5,5)
 ip = c.createIp()
 port = c.createPort()
 c._Coordinator__createNode()
@@ -67,7 +70,7 @@ for i in c.nodeList:
     print(i['node']._routingTable)
     print("--------------")
 
-
+#TODO da mettere in utility
 def writeEdgeCsv(nodeList):
     with open('edge.csv', mode='w') as node_file:
         node_writer = csv.writer(node_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)

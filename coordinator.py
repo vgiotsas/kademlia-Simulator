@@ -74,3 +74,52 @@ class Coordinator(metaclass=Singleton):
                 #self.nodeList.append({'id': node.getNodeId(), 'node': node})
                 self.notNetworkNode.append({'id': node.getNodeId(), 'node': node})
                 self.nodeHashSet.add(id)
+
+    def main(self):
+        dimensionOfReturn = 50
+        self.__createNode()
+        while len(self.notNetworkNode) > 0:
+            randBts = random.randint(0, len(self.nodeList) - 1)
+            bootstrap = self.nodeList[randBts]
+            randNn = random.randint(0, len(self.notNetworkNode) - 1)
+            newNode = self.notNetworkNode[randNn]
+
+            self.nodeList.append(self.notNetworkNode[randNn])
+            del self.notNetworkNode[randNn]
+
+            print(bootstrap)
+            print(newNode)
+            kNode = []
+            prev = None
+            counter = 3
+            bootstrap['node'].insertNode(newNode['id'])
+            newNode['node'].insertNode(bootstrap['id'])
+            randomId = newNode['node'].createRandomId()
+            for i in randomId:
+                while len(kNode) < dimensionOfReturn:
+                    if not kNode:
+                        prev = 0
+                    else:
+                        prev = kNode[len(kNode)-1]['id']
+                    kNode = kNode + bootstrap['node'].findNode(i)
+                    #faccio find node sugli altri 2
+                    for j in range(counter-3, counter):
+                        for n in self.nodeList:
+                            if kNode[j]:
+                                if n['id'] == kNode[j]['id']:
+                                    kNode = kNode + n['node'].findNode(i)
+                    kNode = sorted(kNode, key=lambda k: k['dist'])
+                    if kNode[len(kNode) -1] == prev: 
+                        break
+                    counter += 3
+
+
+                if kNode is not None:
+                    #se fnode <
+                    for n in kNode:
+                        newNode['node'].insertNode(n['id'])
+
+        for i in self.nodeList:
+            print(i['id'])
+            print(i['node']._routingTable)
+            print("--------------")
