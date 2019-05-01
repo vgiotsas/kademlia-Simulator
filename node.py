@@ -38,13 +38,13 @@ class Node:
                     exist = True
         return exist
 
-    def insertNode(self, id):
-        insert = None
+    def insertNode(self, id, ip, port):
+        #insert = None
         timestamp = time.time()
         h = int(math.log2(id))
         #faccio sempre append poi ordino rispetto al tempo, poi taglio per la lunghezza 
         if not self.searchEl(self._routingTable[h], id) and id != self._nodeId:
-            self._routingTable[h].append({'id': id, 'time': timestamp})
+            self._routingTable[h].append({'id': id, 'time': timestamp, 'ip': ip, 'port': port})
             self._routingTable[h] = sorted(self._routingTable[h], key=lambda k: k['time']) 
             self._routingTable[h] = self._routingTable[h][:self._bucketLength]
 
@@ -55,17 +55,9 @@ class Node:
                 if bucket is not None:
                     rtId = bucket['id']
                     dist = self.distance(id, rtId)
-                    closestNode.append({'id': rtId, 'dist': dist})
-                    """
-                    if len(closestNode) < self.dimensionOfReturn and dist > 0 and rtId != id:
-                        closestNode.append({'id': rtId, 'dist': dist})
-                    else:
-                        if dist > 0 and rtId != id:
-                            closestNode = sorted(closestNode, key=lambda k: k['dist']) 
-                            if closestNode[self.dimensionOfReturn - 1]['dist'] > dist:
-                                closestNode[self.dimensionOfReturn - 1]['id'] = rtId  
-                                closestNode[self.dimensionOfReturn - 1]['dist'] = dist  
-                    """
+                    ip = bucket['ip']
+                    port = bucket['port']
+                    closestNode.append({'id': rtId, 'dist': dist, 'ip': ip, 'port': port})
         return closestNode[:self.dimensionOfReturn]
 
 
@@ -90,6 +82,7 @@ class Node:
     def changeState(self):
         self._active = not self._active
     
+    #TODO Da eliminare
     def createRandomId(self):
         randomId = []
         for i in range(0, self._numBit):

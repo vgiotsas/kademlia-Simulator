@@ -47,7 +47,8 @@ class NxGra:
 
 
         #plt.show()
-        plt.savefig('image.jpg')
+        plt.savefig('topology.jpg')
+        plt.show()
 
 #        plt.savefig('testplot.png')
 #        Image.open('testplot.png').save('testplot.jpg','JPEG')
