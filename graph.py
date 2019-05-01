@@ -88,7 +88,6 @@ class Graph:
 
         def inDegreeBarplot(self):
             y_pos = np.arange(len(self.node))
-            print(type(self.node))
             plt.bar(y_pos, self.inDe, align='center', alpha=0.5)
             plt.xticks(y_pos, self.node)
             plt.ylabel('in-degree')
@@ -99,7 +98,6 @@ class Graph:
 
         def outDegreeBarplot(self):
             y_pos = np.arange(len(self.node))
-            print(type(self.node))
             plt.bar(y_pos, self.outDe, align='center', alpha=0.5)
             plt.xticks(y_pos, self.node)
             plt.ylabel('out-degree')
@@ -109,3 +107,17 @@ class Graph:
             plt.savefig('outDegree.jpg')
             plt.show()
 
+        def clusteringBarplot(self, dict):
+            val = []
+            node = []
+            print(type(dict))
+            for key, value in dict.items():
+                val.append(value)
+                node.append(key)
+            y_pos = np.arange(len(val))
+            plt.bar(y_pos, val, align='center', alpha=0.5)
+            plt.xticks(y_pos, node)
+            plt.ylabel('clustering coeff')
+            plt.xlabel('Node')
+            plt.savefig('clustCoeff.jpg')
+            plt.show()

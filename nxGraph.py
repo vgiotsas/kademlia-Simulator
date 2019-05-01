@@ -1,20 +1,26 @@
 import networkx as nx
 import csv
 import matplotlib.pyplot as plt
-#import Image
+from utility import openCsv, findFile
 
 class NxGra:
 
-    def main(self):
+    clustCoeff = None
+
+    def getClusteringCoeff(self):
+        return self.clustCoeff
+
+    def mainGraph(self):
         G = nx.Graph()
 
-        with open('node.csv', 'r') as f:
+        node = openCsv('node.csv')
+        """with open('node.csv', 'r') as f:
             reader = csv.reader(f)
-            node = list(reader)
-
-        with open('edge.csv', 'r') as f:
+            node = list(reader)"""
+        edge = openCsv('edge.csv')
+        """with open('edge.csv', 'r') as f:
             reader = csv.reader(f)
-            edge = list(reader)
+            edge = list(reader)"""
 
         ed = []
         for i in edge:
@@ -29,11 +35,26 @@ class NxGra:
         #G.add_edges_from([(1,2), (1,3), (2,4), (4,5)])
 
         nx.draw_circular(G, with_labels=True)
+        
         print("diametro")
         print(nx.diameter(G))
 
         print("clustering coefficient")
-        print(nx.clustering(G))
+        self.clustCoeff = nx.clustering(G)
+        print(self.clustCoeff)
+
+        print("diametro")
+        print(nx.diameter(G))
+
+        print("clustering coefficient")
+        self.clustCoeff = nx.clustering(G)
+        print(self.clustCoeff)
+        s = 0
+        for key, value in self.clustCoeff.items():
+            s += value
+        averageClustering = s/len(self.clustCoeff)
+        print("average clustering")
+        print(averageClustering)
 
         print("degree")
         deg = nx.degree(G)
@@ -45,10 +66,30 @@ class NxGra:
         print("average degree")
         print(averageDegree)
 
-
-        #plt.show()
         plt.savefig('topology.jpg')
         plt.show()
 
-#        plt.savefig('testplot.png')
-#        Image.open('testplot.png').save('testplot.jpg','JPEG')
+    def snapshotGraph(self):
+        G = nx.Graph()
+
+        snapshotFile = findFile('snapshot*', '../kademlia')
+        for icsv in snapshotFile:
+            edge = openCsv(icsv)
+            ed = []
+            for i in edge:
+                tup = ()
+                for l in range(0, len(i), 2):
+                    tup = (int(i[l]), int(i[l+1]))
+                    ed.append(tup)
+
+            #G.add_nodes_from(node[0])
+            G.add_edges_from(ed)
+            #G.add_nodes_from([1,2,3,4,5])
+            #G.add_edges_from([(1,2), (1,3), (2,4), (4,5)])
+
+            nx.draw_circular(G, with_labels=True)
+        
+
+            plt.savefig('topology'+icsv+'.jpg')
+            plt.show()
+

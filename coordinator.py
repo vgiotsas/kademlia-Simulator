@@ -2,7 +2,7 @@ import random
 import socket
 import struct
 from node import Node
-from utility import writeNodeCsv, writeEdgeCsv, createIp, createId, createPort
+from utility import writeNodeCsv, writeEdgeCsv, createIp, createId, createPort, writeSnapshotCsv
 
 class Singleton(type):
     _instances = {}
@@ -11,117 +11,98 @@ class Singleton(type):
             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
 
-class Coordinator(metaclass=Singleton):
+class Coordinator(metaclass=Singleton): #definisco la classe coordinator come singleton
     nodeNumber = None
     bitsNumber = None
     nodeList = []
-    notNetworkNode = []
-    nodeHashSet = set() #se nel set salvo ip+porta non c'è bisogno di istanziare classe, gli id coincidono
+    notNetworkNode = [] #lista di nodi non ancora entrati nella rete
+    nodeHashSet = set() #con questo set faccio in modo di non avere collisione tra gli id
 
     def __init__(self, n, m):
-        #devo generare un nuovo nodo
         self.nodeNumber = n
         self.bitsNumber = m
         ip = createIp()
         port = createPort()
         id = createId(ip, port, m)
         self.nodeHashSet.add(id)
-        no = Node(ip, port, id, m)
+        no = Node(ip, port, id, m) #creo un nuovo nodo e lo aggiungo alla rete, nel primo passaggio sarà il nodo bootstrap
         self.nodeList.append({'id': no.getNodeId(), 'node': no, 'ip': no._ipAddress, 'port': no._udpPort})
-        #self.nodeList.append(node(ip, port, id))
 
     def __createNode(self):
-        #for i in range(1, self.nodeNumber):
+        """
+        Creo il numero di nodi richiesto dall'utente
+        """
         while len(self.nodeHashSet) < self.nodeNumber:
             ip = createIp()
             port = createPort()
-            #id = self.extractKBits(self.createId(ip,port), self.bitsNumber)
             id = createId(ip,port, self.bitsNumber)
-            if id not in self.nodeHashSet:
+            if id not in self.nodeHashSet: #controllo se l'id è già presente
                 node = Node(ip, port, id, self.bitsNumber)
-                #self.nodeList.append(node(ip, port, id))
-                #self.nodeList.append({'id': node.getNodeId(), 'node': node})
-                self.notNetworkNode.append({'id': node.getNodeId(), 'node': node, 'ip': node._ipAddress, 'port': node._udpPort})
-                self.nodeHashSet.add(id)
+                self.notNetworkNode.append({'id': node.getNodeId(), 'node': node, 'ip': node._ipAddress, 'port': node._udpPort})#inizialmente lo aggiungo alla lista di nodi non ancora nella rete
+                self.nodeHashSet.add(id) #lo aggiungo al set così da non poterlo riutilizzare
 
     def main(self):
+        """
+        funzione in cui viene effettivamente eseguita la simulazione
+        """
         dimensionOfReturn = 50
-        self.__createNode()
-        while len(self.notNetworkNode) > 0:
-            randBts = random.randint(0, len(self.nodeList) - 1)
-            bootstrap = self.nodeList[randBts]
+        #sia c che counterSnapshot sono 2 contatori necessari per creare gli snapshot
+        counterSnapshot = 1
+        c = 1
+        self.__createNode() #
+        while len(self.notNetworkNode) > 0: #itero finchè tutti i nodi non siano nella rete
+            if c %50 == 0: #ogni n passaggi salvo le informazioni in un csv, che poi utilizzer per i grafici
+                writeSnapshotCsv(self.nodeList, counterSnapshot)
+                counterSnapshot += 1
+
+            randBts = random.randint(0, len(self.nodeList) - 1) #
+            bootstrap = self.nodeList[randBts] #il bootstrap è un nodo preso a random dalla lista dei nodi nella rete
             randNn = random.randint(0, len(self.notNetworkNode) - 1)
-            newNode = self.notNetworkNode[randNn]
-
-            self.nodeList.append(self.notNetworkNode[randNn])
+            newNode = self.notNetworkNode[randNn] #il nodo entrante è un nodo preso a random dalla lista dei nodi non ancora nella rete
+            
+            #aggiungo il nodo entrante nella lista dei nodi della rete e lo elimino da quella dei nodi non ancora entrati
+            self.nodeList.append(self.notNetworkNode[randNn]) 
             del self.notNetworkNode[randNn]
-
+            
             print(bootstrap)
             print(newNode)
             kNode = []
             prev = None
             counter = 3
-            bootstrap['node'].insertNode(newNode['id'], newNode['ip'], newNode['port'])
+
+            #inserisco il bootstrap node nella routing table del nodo entrante e viceversa
+            bootstrap['node'].insertNode(newNode['id'], newNode['ip'], newNode['port']) 
             newNode['node'].insertNode(bootstrap['id'], bootstrap['ip'], bootstrap['port'])
+
+            #creo una serie di id a random, un id per ogni elemento della routing table
             randomId = newNode['node'].createRandomId()
-            for i in randomId:
-                while len(kNode) < dimensionOfReturn:
+            for i in randomId: #itero per ogni id random
+                while len(kNode) < dimensionOfReturn: # finchè la bucket non è piena oppure finchè non vengono restituite informazioni utili
                     if not kNode:
                         prev = 0
                     else:
                         prev = kNode[len(kNode)-1]['id']
-                    kNode = kNode + bootstrap['node'].findNode(i)
-                    #faccio find node sugli altri 2
-                    for j in range(counter-3, counter):
+                    kNode = kNode + bootstrap['node'].findNode(i) #eseguo la findnode sul bootstrap node
+                    #prendo i primi n elementi, di default ne vengono presi 3 e eseguo la findnode con lo stesso id su quei nodi
+                    for j in range(counter-3, counter): 
                         for n in self.nodeList:
                             if kNode[j]:
                                 if n['id'] == kNode[j]['id']:
                                     kNode = kNode + n['node'].findNode(i)
+                    #ordino la lista di k nodi restituita dalla findnode
                     kNode = sorted(kNode, key=lambda k: k['dist'])
                     if kNode[len(kNode) -1] == prev: 
                         break
                     counter += 3
-
-
                 if kNode is not None:
                     for n in kNode:
-                        newNode['node'].insertNode(n['id'], n['ip'], n['port'])
+                        newNode['node'].insertNode(n['id'], n['ip'], n['port'])#inserisco i k nodi nella routing table
+            c += 1
 
         for i in self.nodeList:
             print(i['id'])
             print(i['node']._routingTable)
             print("--------------")
         
-        writeNodeCsv(self.nodeList)
-        writeEdgeCsv(self.nodeList)
-#TODO Da mettere in utility
-"""
-    def createIp(self):
-        return socket.inet_ntoa(struct.pack('>I', random.randint(1, 0xffffffff)))
-    
-    def createPort(self):
-        port = random.randint(0, 49151)
-        return str(port)
-    
-    def createId(self, ip, port):
-        id = self.extractKBits(int(hash(ip + port)), self.bitsNumber)
-        if id == 0:
-            id = id + 1
-        if id < 0 : 
-            id *= -1
-        return id
-
-    def extractKBits(self, num, k, p = 0):
-        binary = bin(num) 
-    
-        # remove first two characters 
-        binary = binary[2:] 
-        end = len(binary) - p 
-        start = end - k + 1
-        # extract k  bit sub-string 
-        kBitSubStr = binary[start : end+1] 
-        # convert extracted sub-string into decimal again
-        return int(kBitSubStr,2)
-
-#----------
-    """
+        writeNodeCsv(self.nodeList) #inserisce i nodi nel csv
+        writeEdgeCsv(self.nodeList) #inserisce li archi nel csv

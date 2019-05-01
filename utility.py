@@ -2,6 +2,7 @@ import random
 import socket
 import struct
 import csv
+import os, fnmatch
 
 def createIp():
     return socket.inet_ntoa(struct.pack('>I', random.randint(1, 0xffffffff)))
@@ -42,9 +43,41 @@ def writeEdgeCsv(nodeList):
                             listNodeEdge.append(k['id'])
                             node_writer.writerow(listNodeEdge)
 
+def writeSnapshotCsv(nodeList, counter):
+    with open('snapshot'+str(counter)+'.csv', mode='w') as node_file:
+        node_writer = csv.writer(node_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        for i in nodeList:
+            if i is not None:
+                for n in i['node']._routingTable:
+                    listNodeEdge = []
+                    for k in n:
+                        if k is not None:
+                            listNodeEdge.append(i['id'])
+                            listNodeEdge.append(k['id'])
+                            node_writer.writerow(listNodeEdge)
+
 
 def writeNodeCsv(nodeList):
     with open('node.csv', mode='w') as node_file:
         node_writer = csv.writer(node_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         new_list = [i["id"] for i in nodeList]
         node_writer.writerow(new_list)
+
+def openCsv(name):
+    with open(name, 'r') as f:
+        reader = csv.reader(f)
+        node = list(reader)
+        return node
+
+def findFile(pattern, path):
+    result = []
+    for root, dirs, files in os.walk(path):
+        for name in files:
+            if fnmatch.fnmatch(name, pattern):
+                result.append(os.path.join(root, name).replace('../kademlia/', ''))
+    return result
+
+def removeFile(list):
+    for i in list:
+        os.remove(i)
+        print("File Removed!")
