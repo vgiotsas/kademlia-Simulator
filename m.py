@@ -9,7 +9,6 @@ from utility import removeFile, findFile
 def main():
     n = input("Inserisci il numero di nodi ")
     m = input("inserisci il numero di bit")
-    print("ciao")
     c = Coordinator(int(n),int(m)) #istanzia la classe coordinator
     ng = NxGra() #istanzia la classe nxGraph
     g = Graph() #istanzia la classe graph

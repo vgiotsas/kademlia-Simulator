@@ -9,7 +9,7 @@ class Node:
     _nodeId = None
     _numBit = None
     dimensionOfReturn = 50
-    _bucketLength = 1000
+    _bucketLength = 20
     _routingTable = None #lista di liste con altezza che varia in base alla lunghezza dell'identificatore
     #ogni entry della routing table deve avere anche il timestamp del momento in cui il nodo è stato aggiunto
     _storedValue = {}

@@ -46,6 +46,7 @@ class Graph:
             plt.xticks(y_pos, self.node)
             plt.ylabel('in-degree')
             plt.xlabel('Node')
+            
             plt.savefig('inDegree.jpg')
             plt.show()
 
