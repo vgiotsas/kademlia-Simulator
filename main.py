@@ -7,11 +7,11 @@ from utility import removeFile, findFile
 
 
 def main():
-    n = input("Inserisci il numero di nodi ")
-    m = input("inserisci il numero di bit")
-    c = Coordinator(int(n),int(m)) #istanzia la classe coordinator
-    ng = NxGra() #istanzia la classe nxGraph
-    g = Graph() #istanzia la classe graph
+    n = input("Enter the number of nodes ")
+    m = input("Enter the number of bits")
+    c = Coordinator(int(n),int(m)) #instantiates the coordinator class
+    ng = NxGra() #instantiates the class nxGraph
+    g = Graph() #instantiates the class graph
     c.main() 
     ng.mainGraph()
     ng.snapshotGraph()
